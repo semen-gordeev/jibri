@@ -51,9 +51,12 @@ class JibriSeleniumDriver():
       self.options.add_argument('--start-maximized')
       self.options.add_argument('--kiosk')
       self.options.add_argument('--enabled')
-      self.options.add_argument('--enable-logging')
+      self.options.add_argument('--enable-logging=stderr')
+      self.options.add_argument('--v=1')
       self.options.add_argument('--vmodule=*=3')
       self.options.add_argument('--alsa-output-device=plug:amix')
+      self.options.add_argument('--ignore-certificate-errors')
+      self.options.add_argument('--verbose')
       if binary_location:
         self.options.binary_location = binary_location
       self.initDriver()
@@ -70,7 +73,7 @@ class JibriSeleniumDriver():
         options = self.options
 
       print("Initializing Driver")
-      self.driver = webdriver.Chrome(chrome_options=options, desired_capabilities=desired_capabilities)
+      self.driver = webdriver.Chrome("/usr/local/chromedriver", chrome_options=options, desired_capabilities=desired_capabilities)
 
     def setJibriIdentifiers(self, url,displayname=None, email=None,xmpp_login=None,xmpp_password=None,ignore_flag=False,):
       if displayname == None:

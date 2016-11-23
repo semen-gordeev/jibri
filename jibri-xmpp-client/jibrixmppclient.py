@@ -36,6 +36,7 @@ class JibriXMPPClient(sleekxmpp.ClientXMPP):
         self.jibri_start_callback = jibri_start_callback
         self.jibri_stop_callback = jibri_stop_callback
         self.jibri_health_callback = jibri_health_callback
+        self.iq_callback = self.on_jibri_iq
         self.recording_lock = recording_lock
         self.queue = signal_queue
         self.loop = loop
@@ -49,15 +50,21 @@ class JibriXMPPClient(sleekxmpp.ClientXMPP):
             Callback('Jibri IQ callback',
                      StanzaPath('iq@type=set/jibri'),
                      self.on_jibri_iq))
-
+        self.xmpp.register_handler(
+            Callback('Disco Info',
+                     StanzaPath('iq/disco_info'),
+                     self.handle_disco_info))
 
         register_stanza_plugin(Iq, JibriElement)
         register_stanza_plugin(Iq, JibriStatusElement)
 
+    def connect(self, address=tuple(), reattempt=True, use_tls=False, use_ssl=False):
+        return super(JibriXMPPClient, self).connect(address, reattempt, use_tls, use_ssl)
+
     def on_jibri_iq(self, iq):
-#        global running
-#        global jibriiq
-#        jibriiq = iq
+        #global running
+        #global jibriiq
+        #jibriiq = iq
 
         logging.info("on_jibri_iq: %s" % iq)
 
@@ -74,7 +81,7 @@ class JibriXMPPClient(sleekxmpp.ClientXMPP):
                 logging.info("Unable to acquire a lock, instance is already in use")
                 reply = self.make_iq_error(iq['id'], condition='service-unavailable', text='Instance already in use.', ito=iq['from'], iq=reply)
                 reply['error']['code']='503'
-#                reply['jibri']._setAttr('state', 'pending')
+                # reply['jibri']._setAttr('state', 'pending')
             else:
                 if not iq['jibri']._getAttr('streamid'):
                     logging.info("No stream provided")
@@ -121,6 +128,9 @@ class JibriXMPPClient(sleekxmpp.ClientXMPP):
             # call the stop callback in a new thread
             # this nets out a call to stop_recording('xmpp_stop')
             self.stop_jibri('xmpp_stop')
+
+    def handle_disco_info(self, iq):
+        pass
 
     def start_jibri(self,iq):
         backup_stream = iq['jibri']._getAttr('backup_stream')

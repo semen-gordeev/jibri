@@ -11,17 +11,17 @@ YOUTUBE_BACKUP=$5
 export DISPLAY=:0
 
 #launch xorg and wait
-Xorg -noreset  +extension RANDR +extension RENDER -logfile ./xorg.log  -config ./xorg-video-dummy.conf :0 > /tmp/jibri-xorg.out 2>&1 &
-echo $! > $PID_DIR/Xorg.pid
-sleep 1
+#Xorg -noreset  +extension RANDR +extension RENDER -logfile ./xorg.log  -config ./xorg-video-dummy.conf :0 > /tmp/jibri-xorg.out 2>&1 &
+#echo $! > $PID_DIR/Xorg.pid
+#sleep 1
 
 #hide mouse
 DISPLAY=":0" xdotool mousemove 1280 0
 
 #launch a window manager and wait
-icewm-session > /tmp/jibri-icewm.out 2>&1 &
-echo $! > $PID_DIR/icewm.pid
-sleep 1
+#icewm-session > /tmp/jibri-icewm.out 2>&1 &
+#echo $! > $PID_DIR/icewm.pid
+#sleep 1
 
 
 YOUTUBE_BASE="rtmp://a.rtmp.youtube.com/live2"
@@ -39,5 +39,5 @@ if [ ! -z "$4" ]; then
 
 fi
 
-./start-ffmpeg.sh "$STREAM"
-echo $! > $PID_DIR/ffmpeg.pid 
+$PWD/../scripts/start-ffmpeg.sh "$STREAM"
+

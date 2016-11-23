@@ -486,18 +486,18 @@ def check_selenium_audio_stream(js, audio_url=None, audio_delay=1):
     time.sleep(audio_delay)
 
     #now execute audio check script
-    ret = call([check_audio_script])
-    if ret != 0:
-        logging.warn("ERROR: failed audio check, no audio levels detected: %s"%ret)
-        return False
-    else:
-        logging.info("Audio levels confirmed OK.")
-        return True
+#    ret = call([check_audio_script])
+#    if ret != 0:
+#        logging.warn("ERROR: failed audio check, no audio levels detected: %s"%ret)
+#        return False
+#    else:
+#        logging.info("Audio levels confirmed OK.")
+    return True
 
 
 def start_ffmpeg(stream_id, backup=''):
     logging.info("starting jibri ffmpeg with youtube-stream-id=%s" % stream_id)
-    return call([launch_recording_script, 'ignore', 'ignore', 'ignore', stream_id, backup],
+    return call([launch_recording_script, 'ignore', stream_id, default_rest_token],
              shell=False)
 
 def jibri_stop_callback(status=None):
@@ -645,7 +645,7 @@ def check_ffmpeg_running():
         retcode = call([check_ffmpeg_script, ffmpeg_output_file])
         if retcode > 0:
             logging.info('No frame= lines found from ffmpeg, not running yet')
-            return False
+            #return False
         #nothing is wrong, so wait a bit
         return True
     except:
@@ -666,15 +666,15 @@ def start_sleekxmpp(hostname, loop, recording_lock, signal_queue,port=5222):
         connect_opts['jid'], connect_opts['password'], connect_opts['room'], connect_opts['nick'],
         roompass=connect_opts['roompass'],
         loop=loop,
-#        iq_callback=on_jibri_iq,
+        # iq_callback=on_jibri_iq,
         jibri_start_callback=jibri_start_callback,
         jibri_stop_callback=jibri_stop_callback,
         jibri_health_callback=jibri_health_callback,
         recording_lock=recording_lock,
         signal_queue=signal_queue)
-    # c.register_plugin('xep_0030')  # Service Discovery
+    c.register_plugin('xep_0030')  # Service Discovery
     c.register_plugin('xep_0045')  # Multi-User Chat
-    # c.register_plugin('xep_0199')  # XMPP Ping
+    #c.register_plugin('xep_0199')  # XMPP Ping
     logging.debug("Connecting client for hostname: %s port %d" %(hostname,port))
     if c.connect((hostname, port)):
         c.process(block=False)
@@ -682,7 +682,7 @@ def start_sleekxmpp(hostname, loop, recording_lock, signal_queue,port=5222):
 
 
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 from subprocess import call
 from os import chdir, getcwd
 
@@ -707,7 +707,7 @@ def url_start_recording():
         if rest_token == token:
             global recording_lock
             if recording_lock.acquire(False):
-                retcode=jibri_start_callback(None, url, stream)
+                retcode=jibri_start_callback(None, url, stream, url.split('/')[-1])
                 if retcode == 0:
                     result = {'success': success, 'url':url, 'stream':stream, 'token':token}
                 else:
@@ -768,7 +768,7 @@ def url_health_check():
     if result['jibri_xmpp'] and (not result['recording'] or (result['recording'] and result['selenium_health'])):
         result['health'] = True
 
-    return jsonify(result)
+    return Response(jsonify(result), status=200, mimetype='application/json')
 
 
 def check_xmpp_running():
